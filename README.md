@@ -1,76 +1,71 @@
-# readmai
+# readmai-cli
 
-This project is a Python package named `readmai`, structured using `pyproject.toml` for build configuration and dependency management. It includes a command-line interface (CLI) implemented in `src/readmai/cli.py`.
+This project is a command-line interface (CLI) application named `readmai-cli`. It consists of a Python package named `readmai` with a CLI entry point defined in `readmai/cli.py`. The `readmai-cli` directory serves as the packaging and distribution directory for the CLI application.
 
 ## Installation
 
-The project utilizes `pyproject.toml` for build configuration, suggesting a modern build system like `pip` or `poetry`. To install:
+1.  Ensure you have Python and `pip` installed.
+2.  Navigate to the `readmai-cli` directory:
 
-**Using pip:**
+    ```bash
+    cd readmai-cli
+    ```
 
-1.  Ensure you have Python 3.7+ installed.
-2.  Navigate to the project directory.
-3.  Run:
+3.  Create a virtual environment (recommended):
+
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate  # On Linux/macOS
+    # venv\Scripts\activate  # On Windows
+    ```
+
+4.  Install the package and its dependencies:
 
     ```bash
     pip install .
     ```
-
-    Alternatively, you can install the project along with its dependencies specified in `requirements.txt`:
-
-    ```bash
-    pip install -r requirements.txt .
-    ```
-
-**Using poetry:**
-
-1.  Ensure you have Poetry installed (`pip install poetry`).
-2.  Navigate to the project directory.
-3.  Run:
+    Alternatively, you may install dependencies specified in `requirements.txt` first and then install the package.
 
     ```bash
-    poetry install
+    pip install -r requirements.txt
+    pip install .
     ```
 
+    Installation also works by installing the `readmai` package directly, which `readmai_cli` depends on, using pip.
+    ```bash
+    cd src
+    pip install .
+    ```
 ## Usage
 
-The project provides a command-line interface. After installation, you should be able to access the `readmai` command.
-
-To use the `readmai` command, run:
+After installation, you should be able to run the `readmai` command from your terminal.
 
 ```bash
-readmai --help #or similar; edit based on what readmai's actual CLI help shows.
+readmai --help  # To see available options
 ```
 
-This will display the available commands and options. Refer to the output of `--help` or explore the `src/readmai/cli.py` file to understand the specific functionalities and arguments of the `readmai` command.
+The specific commands and options available depend on the implementation in `readmai/cli.py`. Refer to that file or use the `--help` flag to understand the CLI's functionality.
 
 ## Project Structure
 
-The project structure is as follows:
+The project directory structure is organized as follows:
 
-```
-readmai/
-├── requirements.txt
-├── pyproject.toml
-├── README.md
-└── src/
-    └── readmai/
-        ├── __init__.py
-        └── cli.py
-    └── readmai.egg-info/
-        ├── PKG-INFO
-        ├── SOURCES.txt
-        ├── entry_points.txt
-        ├── top_level.txt
-        └── dependency_links.txt
-```
+-   `readmai-cli/`: The top-level directory for the CLI distribution.
+    -   `requirements.txt`: Specifies the Python package dependencies.
+    -   `pyproject.toml`: Configuration file for building the project (likely contains build system settings, package metadata, etc.).
+    -   `src/`: Contains the source code of the project.
+        -   `readmai_cli.egg-info/`: Metadata directory generated during the building of the `readmai-cli` package.  Contains information like dependencies, entry points, and package versions.
+        -   `readmai/`: Contains the Python package `readmai`.
+            -   `__init__.py`: Makes the directory a Python package.
+            -   `cli.py`: Contains the implementation of the command-line interface. This likely uses a library such as `argparse` or `click`.
+        -   `readmai.egg-info/`: Metadata directory generated during the building of the `readmai` package. Contains information like dependencies, entry points, and package versions.
 
-*   `requirements.txt`: Lists the project's Python dependencies.
-*   `pyproject.toml`: Specifies build system requirements and project metadata (e.g., dependencies, version).
-*   `src/readmai/__init__.py`: Marks the `readmai` directory as a Python package.
-*   `src/readmai/cli.py`: Contains the implementation of the command-line interface.
-*   `src/readmai.egg-info/`: Contains metadata generated during the installation process. This directory is automatically created by `setuptools`. `entry_points.txt` likely defines how `readmai` gets exposed to the command line.
+## Metadata Files
 
-## Contributing
+The `*.egg-info` directories contain various metadata files:
 
-Details on contributing are not evident from the file structure. If you wish to contribute, please contact the project maintainers or refer to external documentation if available.
+-   `PKG-INFO`: Package metadata (name, version, description, etc.).
+-   `SOURCES.txt`: List of all source files included in the package.
+-   `entry_points.txt`: Defines command-line entry points (likely used to make `readmai` executable).
+-   `top_level.txt`: Specifies the top-level packages or modules included in the distribution.
+-   `dependency_links.txt`: Lists URLs for package dependencies.
