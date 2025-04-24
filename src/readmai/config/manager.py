@@ -8,36 +8,65 @@ CONFIG_FILE = CONFIG_DIR / "config.ini"
 
 class ConfigManager:
     @staticmethod
-    def setup_config(api_key=None):
+    def setup_config(api_key=None, provider_name=None):
         """Set up configuration directory and save API key if provided"""
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         
-        if api_key:
-            config = configparser.ConfigParser()
-            if CONFIG_FILE.exists():
-                config.read(CONFIG_FILE)
+        config = configparser.ConfigParser()
+        if CONFIG_FILE.exists():
+            config.read(CONFIG_FILE)
+        
+        if "Credentials" not in config:
+            config["Credentials"] = {}
             
-            if "Credentials" not in config:
-                config["Credentials"] = {}
+        if "Settings" not in config:
+            config["Settings"] = {}
+        
+        # Save provider preference if specified
+        if provider_name:
+            config["Settings"]["default_provider"] = provider_name
+            
+        # Save API key if specified
+        if api_key:
             config["Credentials"]["api_key"] = api_key
             
+        # Only write if we have changes to save
+        if api_key or provider_name:
             try:
                 with open(CONFIG_FILE, "w") as configfile:
                     config.write(configfile)
                 os.chmod(CONFIG_FILE, 0o600)
-                print(f"API key saved to {CONFIG_FILE}")
+                
+                if api_key:
+                    print(f"API key saved to {CONFIG_FILE}")
+                if provider_name:
+                    print(f"Default AI provider set to {provider_name}")
+                    
                 return True
             except IOError as e:
-                print(f"Error saving API key to {CONFIG_FILE}: {e}", file=sys.stderr)
+                print(f"Error saving configuration to {CONFIG_FILE}: {e}", file=sys.stderr)
                 return False
         return True
 
     @staticmethod
-    def resolve_api_key():
+    def get_default_provider():
+        """Get default AI provider from config, defaults to 'gemini' if not specified"""
+        if CONFIG_FILE.exists():
+            config = configparser.ConfigParser()
+            try:
+                config.read(CONFIG_FILE)
+                return config.get("Settings", "default_provider", fallback="gemini")
+            except Exception:
+                pass
+        return "gemini"
+
+    @staticmethod
+    def resolve_api_key(provider="gemini"):
         """Resolve API key from environment variable or config file, with user prompt as fallback"""
-        api_key = os.environ.get("GEMINI_API_KEY")
+        env_var_name = f"{provider.upper()}_API_KEY"
+        api_key = os.environ.get(env_var_name)
         if api_key:
-            print("Using API key from GEMINI_API_KEY environment variable.")
+            print(f"Using API key from {env_var_name} environment variable.")
             return api_key
 
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -54,7 +83,7 @@ class ConfigManager:
             except Exception as e:
                 print(f"Warning: Could not read configuration file: {e}", file=sys.stderr)
 
-        api_key = input("Please enter your Gemini API key: ").strip()
+        api_key = input(f"Please enter your {provider.capitalize()} API key: ").strip()
         if not api_key:
             print("No API key provided. Exiting.", file=sys.stderr)
             sys.exit(1)

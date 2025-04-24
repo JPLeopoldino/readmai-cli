@@ -1,15 +1,21 @@
 import os
 import sys
-import google.generativeai as genai
 from halo import Halo
 
 from ..scanner.project import ProjectScanner
 from ..utils.markdown import MarkdownUtils
+from ..ai.provider import AIProvider
 
 class ReadmeGenerator:
-    def __init__(self):
-        """Initialize the README generator with the Gemini model"""
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+    def __init__(self, ai_provider):
+        """Initialize the README generator with the given AI provider
+        
+        Args:
+            ai_provider (AIProvider): An initialized AI provider
+        """
+        if not isinstance(ai_provider, AIProvider):
+            raise TypeError("ai_provider must be an instance of AIProvider")
+        self.provider = ai_provider
     
     def generate(self, project_path):
         """Generate a README.md file for the given project path"""
@@ -22,17 +28,17 @@ class ReadmeGenerator:
                 return False
 
             prompt = self._create_prompt(project_structure)
-            spinner = Halo(text='Generating README with Gemini', spinner='dots')
+            spinner = Halo(text=f'Generating README with {self.provider.name}', spinner='dots')
             spinner.start()
             
-            response = self.model.generate_content(prompt)
+            content = self.provider.generate_content(prompt)
             spinner.succeed('README content generated.')
 
-            if not response.parts:
-                print("\nError: Gemini API returned an empty response.", file=sys.stderr)
+            if not content:
+                print(f"\nError: {self.provider.name} returned an empty response.", file=sys.stderr)
                 return False
 
-            readme_content = MarkdownUtils.clean_code_blocks(response.text)
+            readme_content = MarkdownUtils.clean_code_blocks(content)
             readme_path = os.path.join(project_path, "README.md")
             
             print(f"Writing README.md to: {readme_path}")
@@ -52,7 +58,7 @@ class ReadmeGenerator:
                 spinner.stop()
     
     def _create_prompt(self, project_structure):
-        """Create the prompt for the Gemini model"""
+        """Create the prompt for the AI model"""
         return f"""
 Generate a README.md file for a project with the following structure:
 

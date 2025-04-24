@@ -1,13 +1,33 @@
 import argparse
 import os
 import sys
-import google.generativeai as genai
 
 from .config.manager import ConfigManager
 from .generator.readme import ReadmeGenerator
+from .ai.gemini import GeminiProvider
+from .ai.openai import OpenAIProvider
+
+def get_ai_provider(provider_name, model=None):
+    """Factory function to create an AI provider instance
+    
+    Args:
+        provider_name (str): Name of the AI provider (gemini, openai)
+        model (str, optional): Model name to use. Defaults to None (provider default).
+    
+    Returns:
+        AIProvider: An instance of the appropriate AI provider
+    """
+    provider_name = provider_name.lower()
+    
+    if provider_name == "gemini":
+        return GeminiProvider(model=model) if model else GeminiProvider()
+    elif provider_name == "openai":
+        return OpenAIProvider(model=model) if model else OpenAIProvider()
+    else:
+        raise ValueError(f"Unsupported AI provider: {provider_name}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate a README.md for a project using Gemini AI.")
+    parser = argparse.ArgumentParser(description="Generate a README.md for a project using AI.")
     parser.add_argument(
         "path",
         nargs="?",
@@ -17,15 +37,39 @@ def main():
     parser.add_argument(
         "--set-api-key",
         metavar="API_KEY",
-        help="Set and save the Gemini API key to the configuration file.",
+        help="Set and save the API key to the configuration file.",
+    )
+    parser.add_argument(
+        "--provider",
+        choices=["gemini", "openai"],
+        help="AI provider to use (default: gemini or value from config)",
+    )
+    parser.add_argument(
+        "--set-default-provider",
+        choices=["gemini", "openai"],
+        help="Set default AI provider in configuration",
+    )
+    parser.add_argument(
+        "--model",
+        help="Specific model to use with the selected provider",
     )
 
     args = parser.parse_args()
 
+    # Handle setting the default provider
+    if args.set_default_provider:
+        if ConfigManager.setup_config(provider_name=args.set_default_provider):
+            print(f"Default provider set to {args.set_default_provider}")
+            if not args.path:  # Exit if only setting provider
+                sys.exit(0)
+        else:
+            sys.exit(1)
+
     # Handle setting the API key
     if args.set_api_key:
-        if ConfigManager.setup_config(args.set_api_key):
-            sys.exit(0)
+        if ConfigManager.setup_config(api_key=args.set_api_key):
+            if not args.path:  # Exit if only setting API key
+                sys.exit(0)
         else:
             sys.exit(1)
 
@@ -35,14 +79,17 @@ def main():
         print(f"Error: Path '{project_path}' is not a valid directory.", file=sys.stderr)
         sys.exit(1)
 
-    # Configure API and generate README
+    # Determine which AI provider to use
+    provider_name = args.provider if args.provider else ConfigManager.get_default_provider()
+    
     try:
-        # Get and configure API key
-        api_key = ConfigManager.resolve_api_key()
-        genai.configure(api_key=api_key)
+        # Create and initialize the AI provider
+        provider = get_ai_provider(provider_name, args.model)
+        api_key = ConfigManager.resolve_api_key(provider_name)
+        provider.initialize(api_key)
         
-        # Generate README file
-        generator = ReadmeGenerator()
+        # Create generator with the chosen provider and generate README
+        generator = ReadmeGenerator(provider)
         success = generator.generate(project_path)
         
         if not success:
