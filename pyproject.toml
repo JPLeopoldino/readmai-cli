@@ -16,6 +16,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License", # Choose your license
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "google-generativeai",
+    "halo",
+    "openai>=1.0.0"
+]
 
 [project.scripts]
 readmai = "readmai.cli:main"

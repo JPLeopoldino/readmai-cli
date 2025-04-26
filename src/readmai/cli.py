@@ -26,7 +26,10 @@ def get_ai_provider(provider_name, model=None):
     else:
         raise ValueError(f"Unsupported AI provider: {provider_name}")
 
-def main():
+def create_parser():
+    """Create and return the argument parser"""
+    available_providers = ["gemini", "openai"]
+    
     parser = argparse.ArgumentParser(description="Generate a README.md for a project using AI.")
     parser.add_argument(
         "path",
@@ -41,19 +44,24 @@ def main():
     )
     parser.add_argument(
         "--provider",
-        choices=["gemini", "openai"],
-        help="AI provider to use (default: gemini or value from config)",
+        choices=available_providers,
+        help=f"AI provider to use (available: {', '.join(available_providers)}), default: gemini or value from config",
     )
     parser.add_argument(
         "--set-default-provider",
-        choices=["gemini", "openai"],
+        choices=available_providers,
         help="Set default AI provider in configuration",
     )
     parser.add_argument(
         "--model",
         help="Specific model to use with the selected provider",
     )
+    
+    return parser
 
+def main():
+    # Create parser
+    parser = create_parser()
     args = parser.parse_args()
 
     # Handle setting the default provider
